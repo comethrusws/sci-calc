@@ -1,84 +1,156 @@
 import java.util.*;
-import java.util.regex.*;
 
 public class CalculatorEngine {
     private StringBuilder expression;
     private String lastAnswer;
+    private String lastExpression;
     private boolean useDegrees;
+    private int cursorPosition;
+    private boolean insertMode;
+    private List<String> history;
+    private int historyIndex;
+    private Map<String, Double> variables;
     
     public CalculatorEngine() {
         expression = new StringBuilder();
         lastAnswer = "0";
+        lastExpression = "";
         useDegrees = true;
+        cursorPosition = 0;
+        insertMode = false;
+        history = new ArrayList<>();
+        historyIndex = -1;
+        variables = new HashMap<>();
+        variables.put("X", 0.0);
+        variables.put("Y", 0.0);
+        variables.put("A", 0.0);
+        variables.put("B", 0.0);
     }
     
     public void appendDigit(String digit) {
-        expression.append(digit);
+        expression.insert(cursorPosition, digit);
+        cursorPosition++;
     }
     
     public void appendOperator(String operator) {
-        if (expression.length() > 0) {
-            expression.append(operator);
-        } else if (operator.equals("−")) {
-            expression.append("−");
-        }
+        expression.insert(cursorPosition, operator);
+        cursorPosition += operator.length();
     }
     
     public void appendFunction(String function) {
-        expression.append(function);
+        expression.insert(cursorPosition, function);
+        cursorPosition += function.length();
     }
     
     public void appendConstant(String constant) {
-        expression.append(constant);
+        expression.insert(cursorPosition, constant);
+        cursorPosition += constant.length();
     }
     
     public void appendParenthesis(String paren) {
-        expression.append(paren);
+        expression.insert(cursorPosition, paren);
+        cursorPosition++;
+    }
+    
+    public void appendVariable(String var) {
+        expression.insert(cursorPosition, var);
+        cursorPosition++;
     }
     
     public void appendAns() {
-        expression.append(lastAnswer);
+        String ans = lastAnswer;
+        expression.insert(cursorPosition, ans);
+        cursorPosition += ans.length();
     }
     
     public void negate() {
         if (expression.length() == 0) {
             expression.append("−");
+            cursorPosition = 1;
         } else {
             String expr = expression.toString();
             if (expr.startsWith("−")) {
                 expression = new StringBuilder(expr.substring(1));
+                cursorPosition = Math.max(0, cursorPosition - 1);
             } else {
                 expression = new StringBuilder("−" + expr);
+                cursorPosition++;
             }
         }
     }
     
     public void delete() {
-        if (expression.length() > 0) {
+        if (cursorPosition > 0 && expression.length() > 0) {
             String expr = expression.toString();
+            String beforeCursor = expr.substring(0, cursorPosition);
+            
             String[] functions = {"sin(", "cos(", "tan(", "asin(", "acos(", "atan(", 
                                   "ln(", "log(", "√(", "exp(", "10^(", "cbrt(", "cube(", "abs("};
             
             for (String func : functions) {
-                if (expr.endsWith(func)) {
-                    expression = new StringBuilder(expr.substring(0, expr.length() - func.length()));
+                if (beforeCursor.endsWith(func)) {
+                    expression.delete(cursorPosition - func.length(), cursorPosition);
+                    cursorPosition -= func.length();
                     return;
                 }
             }
-            expression.deleteCharAt(expression.length() - 1);
+            
+            expression.deleteCharAt(cursorPosition - 1);
+            cursorPosition--;
         }
     }
     
     public void clear() {
         expression = new StringBuilder();
+        cursorPosition = 0;
     }
     
     public void toggleAngleMode() {
         useDegrees = !useDegrees;
     }
     
+    public void toggleInsertMode() {
+        insertMode = !insertMode;
+    }
+    
+    public boolean isUsingDegrees() {
+        return useDegrees;
+    }
+    
+    public void moveCursorLeft() {
+        if (cursorPosition > 0) cursorPosition--;
+    }
+    
+    public void moveCursorRight() {
+        if (cursorPosition < expression.length()) cursorPosition++;
+    }
+    
+    public void historyUp() {
+        if (!history.isEmpty() && historyIndex < history.size() - 1) {
+            historyIndex++;
+            expression = new StringBuilder(history.get(history.size() - 1 - historyIndex));
+            cursorPosition = expression.length();
+        }
+    }
+    
+    public void historyDown() {
+        if (historyIndex > 0) {
+            historyIndex--;
+            expression = new StringBuilder(history.get(history.size() - 1 - historyIndex));
+            cursorPosition = expression.length();
+        } else if (historyIndex == 0) {
+            historyIndex = -1;
+            expression = new StringBuilder();
+            cursorPosition = 0;
+        }
+    }
+    
     public String getExpression() {
         return expression.toString();
+    }
+    
+    public String getLastExpression() {
+        return lastExpression;
     }
     
     public String getCurrentValue() {
@@ -86,10 +158,22 @@ public class CalculatorEngine {
         return expression.toString();
     }
     
+    public void setVariable(String name, double value) {
+        variables.put(name.toUpperCase(), value);
+    }
+    
+    public double getVariable(String name) {
+        return variables.getOrDefault(name.toUpperCase(), 0.0);
+    }
+    
     public String calculate() {
         try {
             String expr = expression.toString();
             if (expr.isEmpty()) return "0";
+            
+            lastExpression = expr;
+            history.add(expr);
+            historyIndex = -1;
             
             double result = evaluate(expr);
             
@@ -102,10 +186,27 @@ public class CalculatorEngine {
             
             lastAnswer = formatResult(result);
             expression = new StringBuilder();
+            cursorPosition = 0;
             return lastAnswer;
         } catch (Exception e) {
             return "Error";
         }
+    }
+    
+    public double evaluateExpression(String expr) {
+        try {
+            return evaluate(expr);
+        } catch (Exception e) {
+            return Double.NaN;
+        }
+    }
+    
+    public double evaluateWithVariable(String expr, String varName, double value) {
+        double oldValue = variables.getOrDefault(varName.toUpperCase(), 0.0);
+        variables.put(varName.toUpperCase(), value);
+        double result = evaluateExpression(expr);
+        variables.put(varName.toUpperCase(), oldValue);
+        return result;
     }
     
     private String formatResult(double result) {
@@ -133,7 +234,12 @@ public class CalculatorEngine {
     
     private String preprocessExpression(String expr) {
         expr = expr.replace("π", String.valueOf(Math.PI));
-        expr = expr.replace("e", String.valueOf(Math.E));
+        
+        for (Map.Entry<String, Double> entry : variables.entrySet()) {
+            expr = expr.replace(entry.getKey().toLowerCase(), String.valueOf(entry.getValue()));
+            expr = expr.replace(entry.getKey().toUpperCase(), String.valueOf(entry.getValue()));
+        }
+        
         expr = expr.replace("−", "-");
         expr = expr.replace("×", "*");
         expr = expr.replace("÷", "/");
@@ -168,7 +274,10 @@ class ExpressionParser {
     public double parse() {
         double result = parseAddSubtract();
         if (pos < expression.length()) {
-            throw new RuntimeException("Unexpected character: " + expression.charAt(pos));
+            char ch = expression.charAt(pos);
+            if (ch != ')' && ch != '}' && ch != ']') {
+                throw new RuntimeException("Unexpected character: " + ch);
+            }
         }
         return result;
     }
@@ -231,8 +340,9 @@ class ExpressionParser {
             throw new RuntimeException("Unexpected end of expression");
         }
         
-        String[] functions = {"asin", "acos", "atan", "sin", "cos", "tan", 
-                              "ln", "log", "sqrt", "exp", "cbrt", "cube", "abs", "10^"};
+        String[] functions = {"asin", "acos", "atan", "sinh", "cosh", "tanh",
+                              "sin", "cos", "tan", "ln", "log", "sqrt", "exp", 
+                              "cbrt", "cube", "abs", "10^", "floor", "ceil", "round"};
         
         for (String func : functions) {
             if (expression.substring(pos).startsWith(func)) {
@@ -242,10 +352,12 @@ class ExpressionParser {
             }
         }
         
-        if (expression.charAt(pos) == '(') {
+        if (expression.charAt(pos) == '(' || expression.charAt(pos) == '{') {
+            char openParen = expression.charAt(pos);
+            char closeParen = openParen == '(' ? ')' : '}';
             pos++;
             double result = parseAddSubtract();
-            if (pos >= expression.length() || expression.charAt(pos) != ')') {
+            if (pos >= expression.length() || expression.charAt(pos) != closeParen) {
                 throw new RuntimeException("Missing closing parenthesis");
             }
             pos++;
@@ -291,6 +403,12 @@ class ExpressionParser {
             case "atan":
                 double atanResult = Math.atan(arg);
                 return useDegrees ? Math.toDegrees(atanResult) : atanResult;
+            case "sinh":
+                return Math.sinh(arg);
+            case "cosh":
+                return Math.cosh(arg);
+            case "tanh":
+                return Math.tanh(arg);
             case "ln":
                 return Math.log(arg);
             case "log":
@@ -307,6 +425,12 @@ class ExpressionParser {
                 return Math.pow(arg, 3);
             case "abs":
                 return Math.abs(arg);
+            case "floor":
+                return Math.floor(arg);
+            case "ceil":
+                return Math.ceil(arg);
+            case "round":
+                return Math.round(arg);
             default:
                 throw new RuntimeException("Unknown function: " + func);
         }

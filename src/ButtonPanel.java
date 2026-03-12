@@ -4,12 +4,13 @@ import java.awt.event.*;
 
 public class ButtonPanel extends JPanel {
     private static final Color PANEL_BG_COLOR = new Color(30, 30, 30);
-    private static final Color NUMBER_BTN_COLOR = new Color(50, 50, 50);
-    private static final Color OPERATOR_BTN_COLOR = new Color(70, 70, 70);
-    private static final Color FUNCTION_BTN_COLOR = new Color(45, 45, 55);
-    private static final Color SPECIAL_BTN_COLOR = new Color(80, 80, 90);
-    private static final Color ENTER_BTN_COLOR = new Color(30, 100, 50);
-    private static final Color CLEAR_BTN_COLOR = new Color(100, 50, 50);
+    private static final Color NUMBER_BTN_COLOR = new Color(55, 55, 55);
+    private static final Color OPERATOR_BTN_COLOR = new Color(75, 75, 80);
+    private static final Color FUNCTION_BTN_COLOR = new Color(50, 50, 60);
+    private static final Color SPECIAL_BTN_COLOR = new Color(85, 85, 95);
+    private static final Color ENTER_BTN_COLOR = new Color(35, 105, 55);
+    private static final Color CLEAR_BTN_COLOR = new Color(110, 55, 55);
+    private static final Color ARROW_BTN_COLOR = new Color(65, 65, 70);
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final Color SECOND_TEXT_COLOR = new Color(100, 180, 255);
     
@@ -37,32 +38,36 @@ public class ButtonPanel extends JPanel {
         gbc.weighty = 1.0;
         
         String[][] buttonLabels = {
-            {"2nd", "MODE", "DEL", "CLEAR"},
+            {"Y=", "WINDOW", "ZOOM", "TRACE", "GRAPH"},
+            {"2nd", "MODE", "DEL", "CLEAR", ""},
             {"x⁻¹", "sin", "cos", "tan", "^"},
             {"x²", "ln", "log", "(", ")"},
             {"√", "7", "8", "9", "÷"},
-            {"π", "4", "5", "6", "×"},
-            {"e", "1", "2", "3", "−"},
-            {"±", "0", ".", "EXP", "+"},
-            {"ANS", "ENTER"}
+            {"MATRIX", "4", "5", "6", "×"},
+            {"PRGM", "1", "2", "3", "−"},
+            {"STAT", "0", ".", "(−)", "+"},
+            {"X", "ANS", "ENTER", "", ""}
         };
         
         String[][] secondLabels = {
-            {"", "QUIT", "INS", ""},
-            {"x³", "sin⁻¹", "cos⁻¹", "tan⁻¹", "ⁿ√"},
+            {"", "", "", "", ""},
+            {"", "QUIT", "INS", "", ""},
+            {"x³", "sin⁻¹", "cos⁻¹", "tan⁻¹", "π"},
             {"∛", "eˣ", "10ˣ", "{", "}"},
-            {"ABS", "", "", "", ""},
+            {"ABS", "", "", "", "e"},
             {"", "", "", "", ""},
-            {"", "", "", "", ""},
-            {"", "", "", "", ""},
-            {"", ""}
+            {"SOLVE", "", "", "", ""},
+            {"", "", "", "ANS", ""},
+            {"", "", "", "", ""}
         };
         
         int row = 0;
         for (int i = 0; i < buttonLabels.length; i++) {
             for (int j = 0; j < buttonLabels[i].length; j++) {
                 String label = buttonLabels[i][j];
-                String secondLabel = (i < secondLabels.length && j < secondLabels[i].length) 
+                if (label.isEmpty()) continue;
+                
+                String secondLabel = (i < secondLabels.length && j < secondLabels[i].length)
                     ? secondLabels[i][j] : "";
                 
                 JButton button = createStyledButton(label, secondLabel, getButtonColor(label));
@@ -72,9 +77,6 @@ public class ButtonPanel extends JPanel {
                 
                 if (label.equals("ENTER")) {
                     gbc.gridwidth = 3;
-                    gbc.gridx = 1;
-                } else if (label.equals("ANS") && i == 7) {
-                    gbc.gridwidth = 1;
                 } else {
                     gbc.gridwidth = 1;
                 }
@@ -100,37 +102,38 @@ public class ButtonPanel extends JPanel {
                     g2d.setColor(bgColor);
                 }
                 
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
                 
                 g2d.setColor(bgColor.darker().darker());
-                g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
+                g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 6, 6);
                 
                 if (!secondLabel.isEmpty()) {
                     g2d.setColor(SECOND_TEXT_COLOR);
-                    g2d.setFont(new Font("Monospaced", Font.PLAIN, 9));
+                    g2d.setFont(new Font("Monospaced", Font.PLAIN, 8));
                     FontMetrics fm = g2d.getFontMetrics();
                     int x = (getWidth() - fm.stringWidth(secondLabel)) / 2;
-                    g2d.drawString(secondLabel, x, 12);
+                    g2d.drawString(secondLabel, x, 10);
                 }
                 
                 g2d.setColor(TEXT_COLOR);
-                g2d.setFont(new Font("Monospaced", Font.BOLD, 14));
+                int fontSize = label.length() > 4 ? 9 : (label.length() > 2 ? 11 : 13);
+                g2d.setFont(new Font("Monospaced", Font.BOLD, fontSize));
                 FontMetrics fm = g2d.getFontMetrics();
                 int x = (getWidth() - fm.stringWidth(label)) / 2;
-                int y = (getHeight() + fm.getAscent()) / 2 + (secondLabel.isEmpty() ? 0 : 3);
+                int y = (getHeight() + fm.getAscent()) / 2 + (secondLabel.isEmpty() ? 0 : 2);
                 g2d.drawString(label, x, y);
                 
                 g2d.dispose();
             }
         };
         
-        button.setPreferredSize(new Dimension(55, 42));
+        button.setPreferredSize(new Dimension(58, 38));
         button.setFocusPainted(false);
         button.setBorderPainted(false);
         button.setContentAreaFilled(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        button.addActionListener(e -> handleButtonPress(label));
+        button.addActionListener(e -> handleButtonPress(label, secondLabel));
         
         return button;
     }
@@ -141,10 +144,17 @@ public class ButtonPanel extends JPanel {
         if (label.matches("[0-9]") || label.equals(".")) return NUMBER_BTN_COLOR;
         if (label.matches("[+−×÷^]")) return OPERATOR_BTN_COLOR;
         if (label.equals("2nd")) return SPECIAL_BTN_COLOR;
+        if (label.matches("Y=|WINDOW|ZOOM|TRACE|GRAPH")) return new Color(40, 40, 45);
         return FUNCTION_BTN_COLOR;
     }
     
-    private void handleButtonPress(String label) {
+    private void handleButtonPress(String label, String secondLabel) {
+        if (secondMode && !secondLabel.isEmpty()) {
+            handleSecondFunction(secondLabel);
+            secondMode = false;
+            return;
+        }
+        
         switch (label) {
             case "CLEAR":
                 engine.clear();
@@ -156,89 +166,137 @@ public class ButtonPanel extends JPanel {
                 break;
             case "ENTER":
                 String result = engine.calculate();
-                displayPanel.setExpression(engine.getExpression());
+                displayPanel.setExpression(engine.getLastExpression());
                 displayPanel.setResult(result);
                 break;
             case "2nd":
                 secondMode = !secondMode;
                 break;
-            case "±":
+            case "(−)":
                 engine.negate();
+                updateDisplay();
+                break;
+            case "MODE":
+                engine.toggleAngleMode();
+                displayPanel.updateStatus();
+                break;
+            case "Y=":
+            case "GRAPH":
+            case "WINDOW":
+            case "ZOOM":
+            case "TRACE":
+                new GraphWindow(engine);
+                break;
+            case "STAT":
+                new StatisticsWindow();
+                break;
+            case "MATRIX":
+                new MatrixWindow();
+                break;
+            case "PRGM":
+                new SolverWindow(engine);
+                break;
+            case "X":
+                engine.appendVariable("x");
                 updateDisplay();
                 break;
             case "ANS":
                 engine.appendAns();
                 updateDisplay();
                 break;
-            default:
-                if (secondMode) {
-                    handleSecondFunction(label);
-                    secondMode = false;
-                } else {
-                    handleRegularInput(label);
-                }
+            case "sin":
+                engine.appendFunction("sin(");
                 updateDisplay();
+                break;
+            case "cos":
+                engine.appendFunction("cos(");
+                updateDisplay();
+                break;
+            case "tan":
+                engine.appendFunction("tan(");
+                updateDisplay();
+                break;
+            case "ln":
+                engine.appendFunction("ln(");
+                updateDisplay();
+                break;
+            case "log":
+                engine.appendFunction("log(");
+                updateDisplay();
+                break;
+            case "√":
+                engine.appendFunction("√(");
+                updateDisplay();
+                break;
+            case "x²":
+                engine.appendOperator("²");
+                updateDisplay();
+                break;
+            case "x⁻¹":
+                engine.appendOperator("⁻¹");
+                updateDisplay();
+                break;
+            case "^":
+                engine.appendOperator("^");
+                updateDisplay();
+                break;
+            case "÷":
+                engine.appendOperator("÷");
+                updateDisplay();
+                break;
+            case "×":
+                engine.appendOperator("×");
+                updateDisplay();
+                break;
+            case "−":
+                engine.appendOperator("−");
+                updateDisplay();
+                break;
+            case "+":
+                engine.appendOperator("+");
+                updateDisplay();
+                break;
+            case "(":
+            case ")":
+            case "{":
+            case "}":
+                engine.appendParenthesis(label);
+                updateDisplay();
+                break;
+            default:
+                if (label.matches("[0-9.]")) {
+                    engine.appendDigit(label);
+                    updateDisplay();
+                }
                 break;
         }
     }
     
     private void handleSecondFunction(String label) {
         switch (label) {
-            case "sin":
+            case "sin⁻¹":
                 engine.appendFunction("asin(");
                 break;
-            case "cos":
+            case "cos⁻¹":
                 engine.appendFunction("acos(");
                 break;
-            case "tan":
+            case "tan⁻¹":
                 engine.appendFunction("atan(");
                 break;
-            case "ln":
+            case "eˣ":
                 engine.appendFunction("exp(");
                 break;
-            case "log":
+            case "10ˣ":
                 engine.appendFunction("10^(");
                 break;
-            case "x²":
+            case "∛":
                 engine.appendFunction("cbrt(");
                 break;
-            case "x⁻¹":
+            case "x³":
                 engine.appendFunction("cube(");
                 break;
-            case "√":
+            case "ABS":
                 engine.appendFunction("abs(");
-                break;
-            default:
-                handleRegularInput(label);
-                break;
-        }
-    }
-    
-    private void handleRegularInput(String label) {
-        switch (label) {
-            case "sin":
-                engine.appendFunction("sin(");
-                break;
-            case "cos":
-                engine.appendFunction("cos(");
-                break;
-            case "tan":
-                engine.appendFunction("tan(");
-                break;
-            case "ln":
-                engine.appendFunction("ln(");
-                break;
-            case "log":
-                engine.appendFunction("log(");
-                break;
-            case "√":
-                engine.appendFunction("√(");
-                break;
-            case "x²":
-                engine.appendOperator("²");
-                break;
-            case "x⁻¹":
-                engine.appendOperator("⁻¹");
                 break;
             case "π":
                 engine.appendConstant("π");
@@ -246,37 +304,22 @@ public class ButtonPanel extends JPanel {
             case "e":
                 engine.appendConstant("e");
                 break;
-            case "^":
-                engine.appendOperator("^");
+            case "ANS":
+                engine.appendAns();
                 break;
-            case "÷":
-                engine.appendOperator("÷");
+            case "QUIT":
+                System.exit(0);
                 break;
-            case "×":
-                engine.appendOperator("×");
+            case "INS":
+                engine.toggleInsertMode();
                 break;
-            case "−":
-                engine.appendOperator("−");
-                break;
-            case "+":
-                engine.appendOperator("+");
-                break;
-            case "(":
-            case ")":
-                engine.appendParenthesis(label);
-                break;
-            case "EXP":
-                engine.appendOperator("E");
-                break;
-            case "MODE":
-                engine.toggleAngleMode();
+            case "SOLVE":
+                new SolverWindow(engine);
                 break;
             default:
-                if (label.matches("[0-9.]")) {
-                    engine.appendDigit(label);
-                }
                 break;
         }
+        updateDisplay();
     }
     
     private void updateDisplay() {
