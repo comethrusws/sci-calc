@@ -19,7 +19,7 @@ public class CalculatorFrame extends JFrame {
     }
     
     private void initializeFrame() {
-        setTitle("TI-84 Plus CE");
+        setTitle("Scientific Calculator");
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
