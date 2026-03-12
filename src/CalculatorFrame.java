@@ -2,12 +2,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public class CalculatorFrame extends JFrame {
-    private static final int FRAME_WIDTH = 320;
-    private static final int FRAME_HEIGHT = 580;
+    private static final int FRAME_WIDTH = 340;
+    private static final int FRAME_HEIGHT = 620;
     private static final Color CALCULATOR_BODY_COLOR = new Color(30, 30, 30);
     
     private DisplayPanel displayPanel;
     private ButtonPanel buttonPanel;
+    private MenuPanel menuPanel;
     private CalculatorEngine engine;
     
     public CalculatorFrame() {
@@ -18,27 +19,39 @@ public class CalculatorFrame extends JFrame {
     }
     
     private void initializeFrame() {
-        setTitle("Scientific Calculator");
+        setTitle("TI-84 Plus CE");
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         setLocationRelativeTo(null);
         getContentPane().setBackground(CALCULATOR_BODY_COLOR);
-        setLayout(new BorderLayout(5, 5));
+        setLayout(new BorderLayout(0, 0));
     }
     
     private void createComponents() {
         JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout(5, 10));
+        mainPanel.setLayout(new BorderLayout(0, 5));
         mainPanel.setBackground(CALCULATOR_BODY_COLOR);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         
-        displayPanel = new DisplayPanel();
+        JPanel topSection = new JPanel(new BorderLayout(0, 3));
+        topSection.setBackground(CALCULATOR_BODY_COLOR);
+        
+        menuPanel = new MenuPanel(engine);
+        displayPanel = new DisplayPanel(engine);
+        
+        topSection.add(menuPanel, BorderLayout.NORTH);
+        topSection.add(displayPanel, BorderLayout.CENTER);
+        
         buttonPanel = new ButtonPanel(engine, displayPanel);
         
-        mainPanel.add(displayPanel, BorderLayout.NORTH);
+        mainPanel.add(topSection, BorderLayout.NORTH);
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
         
         add(mainPanel, BorderLayout.CENTER);
+    }
+    
+    public CalculatorEngine getEngine() {
+        return engine;
     }
 }
